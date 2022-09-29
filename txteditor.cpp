@@ -14,6 +14,12 @@ TxtEditor::TxtEditor(QWidget *parent)
     m_ptAreaEdit = new QPlainTextEdit();
     QString filter = trUtf8("Текстовый файл(*.txt)");
 
+    QAction *actionNewDoc = new QAction("Создать новый", this);
+    connect(actionNewDoc, &QAction::triggered, this, [=](){
+        m_ptAreaEdit->setPlainText("");
+        m_ptAreaEdit->setReadOnly(false);
+    });
+
     QAction *actionOpen = new QAction("Открыть", this);
     connect(actionOpen, &QAction::triggered, this, [=](){
         QString s = QFileDialog::getOpenFileName(this, "Открыть",
@@ -29,6 +35,30 @@ TxtEditor::TxtEditor(QWidget *parent)
             return;
         if (!(file.open(QFile::ReadOnly | QFile::ExistingOnly)))
             return;
+
+        QTextStream stream(&file);
+        m_ptAreaEdit->setPlainText(stream.readAll());
+        m_ptAreaEdit->setReadOnly(false);
+        file.close();
+    });
+
+    QAction *actionOpenReadOnly = new QAction("Открыть только для чтения", this);
+    connect(actionOpenReadOnly, &QAction::triggered, this, [=](){
+        QString s = QFileDialog::getOpenFileName(this, "Открыть",
+                                                 QDir::current().path(),
+                                                 filter);
+        if (!(s.length() > 0))
+            return;
+
+        int index = s.indexOf(".txt");
+        QFile file(s);
+
+        if (!(index != -1 && s.length() - 4 == index))
+            return;
+        if (!(file.open(QFile::ReadOnly | QFile::ExistingOnly)))
+            return;
+
+        m_ptAreaEdit->setReadOnly(true);
 
         QTextStream stream(&file);
         m_ptAreaEdit->setPlainText(stream.readAll());
@@ -68,7 +98,9 @@ TxtEditor::TxtEditor(QWidget *parent)
     });
 
     QMenu *menuFile = new QMenu("Файл", this);
+    menuFile->addAction(actionNewDoc);
     menuFile->addAction(actionOpen);
+    menuFile->addAction(actionOpenReadOnly);
     menuFile->addAction(actionSave);
 
     QMenu *menuHelp = new QMenu("Справка", this);

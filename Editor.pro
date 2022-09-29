@@ -24,8 +24,8 @@ HEADERS += \
 
 RESOURCES = rname.qrc
 
-FORMS += \
-    txteditor.ui
+#FORMS += \
+#    txteditor.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
