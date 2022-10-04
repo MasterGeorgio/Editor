@@ -2,6 +2,7 @@
 #define TXTEDITOR_H
 
 #include <QMainWindow>
+#include <QTranslator>
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QAction>
@@ -24,5 +25,13 @@ private:
 
     // Area edition
     QPlainTextEdit *m_ptAreaEdit;
+    // Выделяем перевод в отдельном поле
+    QTranslator qtLanguageTranslator;
+
+    QMap<QString, QAction*> m_mapActions;
+    QMap<QString, QMenu*> m_mapMenu;
+
+private:
+    void createAction();
 };
 #endif // TXTEDITOR_H

@@ -1,6 +1,7 @@
 #include "txteditor.h"
 #include "ui_txteditor.h"
 
+#include <QApplication>
 #include <QMessageBox>
 #include <QTextStream>
 #include <QFileDialog>
@@ -12,16 +13,39 @@ TxtEditor::TxtEditor(QWidget *parent)
 {
 
     m_ptAreaEdit = new QPlainTextEdit();
+
+    createAction();
+
+    QMenuBar *menuBar = new QMenuBar(this);
+    menuBar->addMenu(m_mapMenu["File"]);
+    menuBar->addMenu(m_mapMenu["View"]);
+    menuBar->addMenu(m_mapMenu["Help"]);
+
+    setMenuBar(menuBar);
+    setCentralWidget(m_ptAreaEdit);
+
+    // Сделаем первоначальную инициализацию перевода для окна приложения
+    qtLanguageTranslator.load("QtLanguage_ru", ".");
+    qApp->installTranslator(&qtLanguageTranslator);
+}
+
+TxtEditor::~TxtEditor()
+{
+    delete ui;
+}
+
+void TxtEditor::createAction(){
     QString filter = trUtf8("Текстовый файл(*.txt)");
 
-    QAction *actionNewDoc = new QAction("Создать новый", this);
-    connect(actionNewDoc, &QAction::triggered, this, [=](){
+    m_mapActions["NewDoc"] = new QAction(tr("Создать новый"), this);
+    connect(m_mapActions["NewDoc"], &QAction::triggered, this, [=](){
         m_ptAreaEdit->setPlainText("");
         m_ptAreaEdit->setReadOnly(false);
     });
+    m_mapActions["NewDoc"]->setShortcut(Qt::CTRL + Qt::Key_N);
 
-    QAction *actionOpen = new QAction("Открыть", this);
-    connect(actionOpen, &QAction::triggered, this, [=](){
+    m_mapActions["Open"] = new QAction(tr("Открыть"), this);
+    connect(m_mapActions["Open"], &QAction::triggered, this, [=](){
         QString s = QFileDialog::getOpenFileName(this, "Открыть",
                                                  QDir::current().path(),
                                                  filter);
@@ -41,9 +65,10 @@ TxtEditor::TxtEditor(QWidget *parent)
         m_ptAreaEdit->setReadOnly(false);
         file.close();
     });
+    m_mapActions["Open"]->setShortcut(Qt::CTRL + Qt::Key_O);
 
-    QAction *actionOpenReadOnly = new QAction("Открыть только для чтения", this);
-    connect(actionOpenReadOnly, &QAction::triggered, this, [=](){
+    m_mapActions["OpenRead"] = new QAction(tr("Открыть только для чтения"), this);
+    connect(m_mapActions["OpenRead"], &QAction::triggered, this, [=](){
         QString s = QFileDialog::getOpenFileName(this, "Открыть",
                                                  QDir::current().path(),
                                                  filter);
@@ -65,8 +90,8 @@ TxtEditor::TxtEditor(QWidget *parent)
         file.close();
     });
 
-    QAction *actionSave = new QAction("Сохранить", this);
-    connect(actionSave, &QAction::triggered, this, [=](){
+    m_mapActions["Save"] = new QAction(tr("Сохранить"), this);
+    connect(m_mapActions["Save"], &QAction::triggered, this, [=](){
         QString s = QFileDialog::getSaveFileName(this, "Сохранить",
                                                  QDir::current().path(),
                                                  filter);
@@ -82,9 +107,10 @@ TxtEditor::TxtEditor(QWidget *parent)
         stream << m_ptAreaEdit->toPlainText();
         file.close();
     });
+    m_mapActions["Save"]->setShortcut(Qt::CTRL + Qt::Key_S);
 
-    QAction *actionHelp = new QAction("О программе", this);
-    connect(actionHelp, &QAction::triggered, this, [=](){
+    m_mapActions["Info"] = new QAction(tr("О программе"), this);
+    connect(m_mapActions["Info"], &QAction::triggered, this, [=](){
 
         QFile file(":help.txt");
         if (!(file.open(QFile::ReadOnly)))
@@ -96,26 +122,40 @@ TxtEditor::TxtEditor(QWidget *parent)
         ms.exec();
         file.close();
     });
+    m_mapActions["Exit"] = new QAction(tr("Выход"), this);
+    connect(m_mapActions["Exit"], &QAction::triggered, this, [=](){
+        qApp->exit();
+    });
+    m_mapActions["Exit"]->setShortcut(Qt::CTRL + Qt::Key_Q);
 
-    QMenu *menuFile = new QMenu("Файл", this);
-    menuFile->addAction(actionNewDoc);
-    menuFile->addAction(actionOpen);
-    menuFile->addAction(actionOpenReadOnly);
-    menuFile->addAction(actionSave);
+    m_mapActions["Rus"] = new QAction(tr("Русский"), this);
+    connect(m_mapActions["Rus"], &QAction::triggered, this, [=](){
+        // Загружаем перевод
+        qtLanguageTranslator.load("QtLanguage_ru");
+        qApp->installTranslator(&qtLanguageTranslator);
+    });
+    m_mapActions["Eng"] = new QAction(tr("Английский"), this);
+    connect(m_mapActions["Eng"], &QAction::triggered, this, [=](){
+        qtLanguageTranslator.load("QtLanguage_en");
+        qApp->installTranslator(&qtLanguageTranslator);
 
-    QMenu *menuHelp = new QMenu("Справка", this);
-    menuHelp->addAction(actionHelp);
+        for(QAction* m: m_mapActions)
+            m->setText(m->text());
+    });
 
-    QMenuBar *menuBar = new QMenuBar(this);
-    menuBar->addMenu(menuFile);
-    menuBar->addMenu(menuHelp);
+    m_mapMenu["File"] = new QMenu(tr("Файл"), this);
+    m_mapMenu["File"]->addAction(m_mapActions["NewDoc"]);
+    m_mapMenu["File"]->addAction(m_mapActions["Open"]);
+    m_mapMenu["File"]->addAction(m_mapActions["OpenRead"]);
+    m_mapMenu["File"]->addAction(m_mapActions["Save"]);
 
-    setMenuBar(menuBar);
-    setCentralWidget(m_ptAreaEdit);
-}
+    m_mapMenu["View"] = new QMenu(("Вид"), this);
+    m_mapMenu["View"]->addAction(m_mapActions["Rus"]);
+    m_mapMenu["View"]->addAction(m_mapActions["Eng"]);
 
-TxtEditor::~TxtEditor()
-{
-    delete ui;
+    m_mapMenu["Help"] = new QMenu(tr("Справка"), this);
+    m_mapMenu["Help"]->addAction(m_mapActions["Info"]);
+    m_mapMenu["Help"]->addAction(m_mapActions["Exit"]);
+
 }
 

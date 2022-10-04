@@ -1,5 +1,8 @@
 QT       += core gui
 
+TRANSLATIONS += QtLanguage_en.ts QtLanguage_ru.ts
+CODECFORSRC = UTF-8
+
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++11
